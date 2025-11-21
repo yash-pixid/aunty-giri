@@ -1,0 +1,767 @@
+openapi: 3.0.3
+info:
+  title: Student Monitor Backend API
+  description: API for monitoring student computer activity, tracking applications, websites, and system metrics
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.example.com
+    description: Production server
+
+tags:
+  - name: Auth
+    description: Authentication and user management
+  - name: Monitor
+    description: Data collection endpoints
+  - name: Dashboard
+    description: Analytics and reporting endpoints
+  - name: Health
+    description: System health checks
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check server health and database connection
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+                  uptime:
+                    type: number
+                    description: Server uptime in seconds
+
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+                role:
+                  type: string
+                  enum: [admin, parent, student]
+                  default: student
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Get current user
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+
+  /api/v1/monitor/activity:
+    post:
+      tags:
+        - Monitor
+      summary: Log activity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityRequest'
+      responses:
+        '201':
+          description: Activity logged successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      activity:
+                        $ref: '#/components/schemas/Activity'
+
+  /api/v1/monitor/activities:
+    get:
+      tags:
+        - Monitor
+      summary: Get activities
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: appName
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityListResponse'
+
+  /api/v1/monitor/screenshot:
+    post:
+      tags:
+        - Monitor
+      summary: Upload screenshot
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - screenshot
+              properties:
+                screenshot:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Screenshot uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      screenshot:
+                        $ref: '#/components/schemas/Screenshot'
+
+  /api/v1/monitor/screenshots:
+    get:
+      tags:
+        - Monitor
+      summary: Get screenshots
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of screenshots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      screenshots:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Screenshot'
+
+  /api/v1/monitor/metrics:
+    post:
+      tags:
+        - Monitor
+      summary: Log system metrics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricsRequest'
+      responses:
+        '201':
+          description: Metrics logged successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      metric:
+                        $ref: '#/components/schemas/SystemMetric'
+
+  /api/v1/dashboard/summary:
+    get:
+      tags:
+        - Dashboard
+      summary: Get dashboard summary
+      responses:
+        '200':
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/DashboardSummary'
+
+  /api/v1/dashboard/top-apps:
+    get:
+      tags:
+        - Dashboard
+      summary: Get top applications
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Top applications list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TopApp'
+
+  /api/v1/dashboard/productivity-score:
+    get:
+      tags:
+        - Dashboard
+      summary: Get productivity score
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Productivity score
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ProductivityScore'
+
+  /api/v1/dashboard/timeline:
+    get:
+      tags:
+        - Dashboard
+      summary: Get activity timeline
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+            default: today
+        - name: interval
+          in: query
+          schema:
+            type: string
+            enum: [minute, hour, day]
+            default: hour
+      responses:
+        '200':
+          description: Activity timeline
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ActivityTimeline'
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [admin, parent, student]
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AuthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              type: string
+              description: JWT token
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        window_title:
+          type: string
+        app_name:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          description: Duration in seconds
+        activity_type:
+          type: string
+          enum: [application, browser, system]
+        url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    ActivityRequest:
+      type: object
+      required:
+        - window_title
+        - app_name
+        - start_time
+        - end_time
+        - activity_type
+      properties:
+        window_title:
+          type: string
+        app_name:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        activity_type:
+          type: string
+          enum: [application, browser, system]
+        url:
+          type: string
+        metadata:
+          type: object
+
+    ActivityListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            total:
+              type: integer
+            activities:
+              type: array
+              items:
+                $ref: '#/components/schemas/Activity'
+
+    Screenshot:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        file_path:
+          type: string
+        file_size:
+          type: integer
+        width:
+          type: integer
+        height:
+          type: integer
+        format:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+
+    MetricsRequest:
+      type: object
+      required:
+        - cpu
+        - memory
+        - disk
+      properties:
+        cpu:
+          type: object
+          required:
+            - usage
+          properties:
+            usage:
+              type: number
+              minimum: 0
+              maximum: 100
+            temperature:
+              type: number
+        memory:
+          type: object
+          required:
+            - usage
+          properties:
+            usage:
+              type: number
+              minimum: 0
+              maximum: 100
+        disk:
+          type: object
+          required:
+            - usage
+          properties:
+            usage:
+              type: number
+            read:
+              type: number
+            write:
+              type: number
+        network:
+          type: object
+          properties:
+            in:
+              type: number
+            out:
+              type: number
+
+    SystemMetric:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        cpu_usage:
+          type: number
+        memory_usage:
+          type: number
+        disk_usage:
+          type: number
+        network_in:
+          type: number
+        network_out:
+          type: number
+        cpu_temperature:
+          type: number
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    DashboardSummary:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            totalTime:
+              type: integer
+            productiveTime:
+              type: integer
+            productivityScore:
+              type: integer
+              minimum: 0
+              maximum: 100
+            screenshotsCount:
+              type: integer
+            avg_cpu_usage:
+              type: number
+            avg_memory_usage:
+              type: number
+            avg_disk_usage:
+              type: number
+        comparison:
+          type: object
+          properties:
+            yesterday_total_time:
+              type: integer
+
+    TopApp:
+      type: object
+      properties:
+        app_name:
+          type: string
+        total_duration:
+          type: integer
+          description: Duration in seconds
+        sessions:
+          type: integer
+
+    ProductivityScore:
+      type: object
+      properties:
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        breakdown:
+          type: object
+          properties:
+            productive:
+              type: integer
+            neutral:
+              type: integer
+            distracting:
+              type: integer
+        totalTime:
+          type: integer
+
+    ActivityTimeline:
+      type: object
+      properties:
+        timeline:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              properties:
+                app_name:
+                  type: string
+                duration:
+                  type: integer
+        activity_types:
+          type: array
+          items:
+            type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              message:
+                type: string
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              message:
+                type: string
+                example: Invalid credentials
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              message:
+                type: string
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              message:
+                type: string
+
