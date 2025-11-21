@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/Yash/Desktop/AuntyGiri/student-monitor-backend/logs/.30b3a58f28d06ae04146c891cbc7af26421b4bdd-audit.json",
+    "files": [
+        {
+            "date": 1763741293959,
+            "name": "/Users/Yash/Desktop/AuntyGiri/student-monitor-backend/logs/combined-2025-11-21.log",
+            "hash": "9ee7a20fc64b5e2f3f87a421cf8be657bc8dfa9f322e02e0e4de8a43ccb713dd"
+        }
+    ],
+    "hashType": "sha256"
+}
