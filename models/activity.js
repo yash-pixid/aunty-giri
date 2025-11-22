@@ -54,6 +54,15 @@ const Activity = (sequelize, DataTypes) => {
       defaultValue: true,
       field: 'is_active'
     },
+    focus_session_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'focus_session_id',
+      references: {
+        model: 'focus_sessions',
+        key: 'id'
+      }
+    },
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -88,7 +97,7 @@ const Activity = (sequelize, DataTypes) => {
         fields: ['user_id']
       },
       {
-        fields: ['startTime', 'endTime']
+        fields: ['start_time', 'end_time']
       }
     ]
   });
