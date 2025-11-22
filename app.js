@@ -50,12 +50,14 @@ const initializeApp = async () => {
     const dashboardRoutes = (await import('./routes/dashboard.js')).default;
     const authRoutes = (await import('./routes/auth.js')).default;
     const recommendationRoutes = (await import('./routes/recommendations.js')).default;
+    const focusRoutes = (await import('./routes/focus.js')).default;
 
     // API Routes
     app.use('/api/v1/monitor', monitorRoutes);
     app.use('/api/v1/dashboard', dashboardRoutes);
     app.use('/api/v1/auth', authRoutes);
     app.use('/api/v1/recommendations', recommendationRoutes);
+    app.use('/api/v1/focus', focusRoutes);
 
     // Health check endpoint
     app.get('/health', (req, res) => {

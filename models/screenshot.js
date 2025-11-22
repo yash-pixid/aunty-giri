@@ -75,6 +75,15 @@ const Screenshot = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
       field: 'processing_error'
+    },
+    focus_session_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'focus_session_id',
+      references: {
+        model: 'focus_sessions',
+        key: 'id'
+      }
     }
   }, {
     timestamps: false,

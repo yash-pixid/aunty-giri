@@ -7,6 +7,7 @@ import fs from 'fs';
 import { Op } from 'sequelize';
 import sharp from 'sharp';
 import { queueScreenshotForProcessing } from '../services/screenshotQueue.js';
+import focusSessionService from '../services/focusSessionService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,6 +57,15 @@ export const uploadScreenshot = async (req, res, next) => {
       },
       processing_status: 'pending'
     });
+
+    // Link to active focus session if exists
+    focusSessionService.linkScreenshotToSession(req.user.id, screenshot.id)
+      .catch(error => {
+        logger.error('Error linking screenshot to focus session', {
+          screenshotId: screenshot.id,
+          error: error.message
+        });
+      });
 
     // Queue screenshot for AI processing (non-blocking)
     queueScreenshotForProcessing(screenshot.id, screenshot.file_path)
@@ -227,6 +237,15 @@ export const logActivity = async (req, res, next) => {
       duration: req.body.duration || 0,
       url: req.body.url || null
     });
+
+    // Link to active focus session if exists
+    focusSessionService.linkActivityToSession(req.user.id, activity.id)
+      .catch(error => {
+        logger.error('Error linking activity to focus session', {
+          activityId: activity.id,
+          error: error.message
+        });
+      });
 
     res.status(201).json({
       status: 'success',
