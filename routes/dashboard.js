@@ -14,5 +14,6 @@ router.get('/website-usage', dashboardController.getWebsiteUsage);
 router.get('/productivity-score', dashboardController.getProductivityScore);
 router.get('/screenshots', dashboardController.getScreenshots);
 router.get('/activity-report', dashboardController.generateActivityReport);
+router.get('/activity-predictions', dashboardController.getActivityPredictions);
 
 export default router;
