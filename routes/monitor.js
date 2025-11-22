@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import * as monitorController from '../controllers/monitorController.js';
+import * as analysisController from '../controllers/analysisController.js';
 import { authenticate } from '../middleware/auth.js';
 import { upload, processImage } from '../utils/upload.js';
 
@@ -11,6 +12,14 @@ router.use(authenticate);
 router.post('/screenshot', upload.single('screenshot'), monitorController.uploadScreenshot);
 router.get('/screenshots', monitorController.getScreenshots);
 router.delete('/screenshots/:id', monitorController.deleteScreenshot);
+
+// AI Analysis endpoints
+router.get('/screenshots/:id/analysis', analysisController.getScreenshotAnalysis);
+router.post('/screenshots/:id/reprocess', analysisController.reprocessScreenshot);
+router.get('/analysis/summary', analysisController.getAnalysisSummary);
+router.get('/analysis/queue-stats', analysisController.getQueueStatistics);
+router.post('/analysis/batch-process', analysisController.triggerBatchProcessing);
+router.get('/analysis/health', analysisController.checkAPIHealth);
 
 // Activity tracking endpoints
 router.post('/activity', monitorController.logActivity);
