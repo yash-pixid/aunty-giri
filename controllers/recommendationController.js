@@ -19,11 +19,11 @@ export const populateRecommendations = async (req, res, next) => {
   try {
     const { student_standard } = req.body;
     
-    // Validate student_standard
-    if (!student_standard || student_standard < 9 || student_standard > 12) {
+    // Validate student_standard exists
+    if (!student_standard) {
       return res.status(400).json({
         status: 'error',
-        message: 'Valid student_standard (9-12) is required'
+        message: 'student_standard is required'
       });
     }
 

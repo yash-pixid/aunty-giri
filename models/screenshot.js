@@ -55,6 +55,26 @@ const Screenshot = (sequelize, DataTypes) => {
       type: DataTypes.JSONB,
       defaultValue: {},
       field: 'metadata'
+    },
+    processing_status: {
+      type: DataTypes.ENUM('pending', 'processing', 'completed', 'failed'),
+      defaultValue: 'pending',
+      field: 'processing_status'
+    },
+    processed_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'processed_at'
+    },
+    ai_analysis: {
+      type: DataTypes.JSONB,
+      defaultValue: {},
+      field: 'ai_analysis'
+    },
+    processing_error: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: 'processing_error'
     }
   }, {
     timestamps: false,
@@ -75,6 +95,15 @@ const Screenshot = (sequelize, DataTypes) => {
       },
       {
         fields: ['isArchived']
+      },
+      {
+        fields: ['processing_status']
+      },
+      {
+        fields: ['processed_at']
+      },
+      {
+        fields: ['user_id', 'processing_status']
       }
     ]
   });
