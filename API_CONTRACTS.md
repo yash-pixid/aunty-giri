@@ -19,8 +19,8 @@ Authorization: Bearer <jwt_token>
 
 1. [Authentication APIs](#authentication-apis)
 2. [Monitor APIs](#monitor-apis)
-3. [Dashboard APIs](#dashboard-apis)
-4. [Health Check](#health-check)
+3. [Dashboard APIs](#dashboard-apis)4. [Recommendation APIs](#recommendation-apis)
+5. [Health Check](#health-check)
 
 ---
 
@@ -1114,6 +1114,458 @@ Generate comprehensive activity report.
 
 ---
 
+## Recommendation APIs
+
+Base Path: `/api/v1/recommendations`
+
+### 1. Get Personalized Recommendations
+
+**GET** `/api/v1/recommendations`
+
+Get personalized content recommendations based on user's standard and trending topics in India.
+
+#### Query Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `limit` | integer | No | 20 | Number of recommendations to return |
+| `offset` | integer | No | 0 | Number of recommendations to skip |
+| `category` | string | No | - | Filter by category |
+| `content_type` | string | No | - | Filter by content type ('video', 'article', 'course', 'tutorial', 'blog') |
+| `difficulty_level` | string | No | - | Filter by difficulty ('beginner', 'intermediate', 'advanced') |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "status": "success",
+  "data": {
+    "total": "integer",
+    "recommendations": [
+      {
+        "id": "uuid",
+        "title": "string",
+        "description": "string",
+        "content_type": "string",
+        "url": "string",
+        "thumbnail_url": "string",
+        "category": "string",
+        "subcategory": "string",
+        "target_standards": "array",
+        "difficulty_level": "string",
+        "duration_minutes": "integer",
+        "language": "string",
+        "source": "string",
+        "author": "string",
+        "rating": "number",
+        "tags": "array",
+        "trending_score": "number",
+        "personalization_score": "number",
+        "created_at": "ISO8601 datetime",
+        "user_interaction": {
+          "interaction_type": "string",
+          "rating": "integer",
+          "recommended_at": "ISO8601 datetime"
+        }
+      }
+    ],
+    "pagination": {
+      "limit": "integer",
+      "offset": "integer",
+      "total_pages": "integer"
+    }
+  }
+}
+```
+
+---
+
+### 2. Get Trending Topics
+
+**GET** `/api/v1/recommendations/trending-topics`
+
+Get trending topics relevant to user's standard and current growth trends in India.
+
+#### Query Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `limit` | integer | No | 10 | Number of topics to return |
+| `category` | string | No | - | Filter by category |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "status": "success",
+  "data": {
+    "trending_topics": [
+      {
+        "id": "uuid",
+        "topic_name": "string",
+        "description": "string",
+        "category": "string",
+        "target_age_groups": "array",
+        "target_standards": "array",
+        "relevance_in_india": "string",
+        "future_prospects": "string",
+        "trending_score": "number",
+        "growth_rate": "number",
+        "job_market_demand": "string",
+        "salary_range": "string",
+        "skills_required": "array",
+        "related_careers": "array",
+        "learning_path": "array",
+        "created_at": "ISO8601 datetime"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 3. Get Recommendations by Category
+
+**GET** `/api/v1/recommendations/category/:category`
+
+Get recommendations filtered by a specific category.
+
+#### URL Parameters
+
+- `category` (string): Category name (e.g., 'technology', 'ai_ml', 'digital_marketing')
+
+#### Query Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `limit` | integer | No | 15 | Number of recommendations to return |
+| `offset` | integer | No | 0 | Number of recommendations to skip |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "status": "success",
+  "data": {
+    "category": "string",
+    "total": "integer",
+    "recommendations": "array (same structure as personalized recommendations)",
+    "pagination": {
+      "limit": "integer",
+      "offset": "integer",
+      "total_pages": "integer"
+    }
+  }
+}
+```
+
+---
+
+### 4. Search Recommendations
+
+**GET** `/api/v1/recommendations/search`
+
+Search recommendations by query string.
+
+#### Query Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `q` | string | Yes | - | Search query (minimum 2 characters) |
+| `limit` | integer | No | 20 | Number of results to return |
+| `offset` | integer | No | 0 | Number of results to skip |
+| `category` | string | No | - | Filter by category |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "status": "success",
+  "data": {
+    "query": "string",
+    "total": "integer",
+    "recommendations": "array (same structure as personalized recommendations)",
+    "pagination": {
+      "limit": "integer",
+      "offset": "integer",
+      "total_pages": "integer"
+    }
+  }
+}
+```
+
+---
+
+### 5. Get Career Recommendations
+
+**GET** `/api/v1/recommendations/career`
+
+Get career-focused recommendations based on high-demand fields in India.
+
+#### Query Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `limit` | integer | No | 15 | Number of recommendations to return |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "status": "success",
+  "data": {
+    "career_topics": "array (trending topics with high job demand)",
+    "recommendations": "array (career-focused content)"
+  }
+}
+```
+
+---
+
+### 6. Get Recommendations for Topic
+
+**GET** `/api/v1/recommendations/topic/:topic_id`
+
+Get recommendations related to a specific trending topic.
+
+#### URL Parameters
+
+- `topic_id` (uuid): Trending topic ID
+
+#### Query Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `limit` | integer | No | 10 | Number of recommendations to return |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "status": "success",
+  "data": {
+    "topic": {
+      "id": "uuid",
+      "topic_name": "string",
+      "description": "string",
+      "category": "string",
+      "future_prospects": "string",
+      "job_market_demand": "string",
+      "salary_range": "string"
+    },
+    "recommendations": "array (related content)"
+  }
+}
+```
+
+---
+
+### 7. Record User Interaction
+
+**POST** `/api/v1/recommendations/interactions/:recommendation_id`
+
+Record user interaction with a recommendation (viewed, liked, saved, etc.).
+
+#### URL Parameters
+
+- `recommendation_id` (uuid): Recommendation ID
+
+#### Request Body
+
+```json
+{
+  "interaction_type": "string (required, 'viewed' | 'clicked' | 'liked' | 'saved' | 'completed' | 'dismissed')",
+  "rating": "integer (optional, 1-5)",
+  "time_spent_minutes": "integer (optional)",
+  "completion_percentage": "number (optional, 0-100)",
+  "feedback": "string (optional)"
+}
+```
+
+#### Response
+
+**Status**: `201 Created`
+
+```json
+{
+  "status": "success",
+  "data": {
+    "interaction": {
+      "id": "uuid",
+      "user_id": "uuid",
+      "recommendation_id": "uuid",
+      "interaction_type": "string",
+      "rating": "integer",
+      "time_spent_minutes": "integer",
+      "completion_percentage": "number",
+      "feedback": "string",
+      "recommended_at": "ISO8601 datetime",
+      "interacted_at": "ISO8601 datetime"
+    }
+  }
+}
+```
+
+---
+
+### 8. Get User Interaction History
+
+**GET** `/api/v1/recommendations/interactions`
+
+Get user's interaction history with recommendations.
+
+#### Query Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `limit` | integer | No | 50 | Number of interactions to return |
+| `offset` | integer | No | 0 | Number of interactions to skip |
+| `interaction_type` | string | No | - | Filter by interaction type |
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "status": "success",
+  "data": {
+    "total": "integer",
+    "interactions": [
+      {
+        "id": "uuid",
+        "interaction_type": "string",
+        "rating": "integer",
+        "time_spent_minutes": "integer",
+        "completion_percentage": "number",
+        "feedback": "string",
+        "recommended_at": "ISO8601 datetime",
+        "interacted_at": "ISO8601 datetime",
+        "Recommendation": {
+          "title": "string",
+          "content_type": "string",
+          "category": "string",
+          "url": "string",
+          "thumbnail_url": "string"
+        }
+      }
+    ],
+    "pagination": {
+      "limit": "integer",
+      "offset": "integer",
+      "total_pages": "integer"
+    }
+  }
+}
+```
+
+---
+
+### 9. Get Available Categories
+
+**GET** `/api/v1/recommendations/meta/categories`
+
+Get list of available recommendation categories.
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "status": "success",
+  "data": {
+    "categories": [
+      {
+        "value": "string",
+        "label": "string"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 10. Get Content Types
+
+**GET** `/api/v1/recommendations/meta/content-types`
+
+Get list of available content types.
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "status": "success",
+  "data": {
+    "content_types": [
+      {
+        "value": "string",
+        "label": "string"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 11. Get Recommendation Statistics
+
+**GET** `/api/v1/recommendations/stats`
+
+Get recommendation system statistics (admin endpoint).
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "status": "success",
+  "data": {
+    "total_recommendations": "integer",
+    "total_trending_topics": "integer",
+    "total_interactions": "integer",
+    "popular_categories": [
+      {
+        "category": "string",
+        "count": "integer"
+      }
+    ],
+    "most_interacted": [
+      {
+        "recommendation_id": "uuid",
+        "interaction_count": "integer",
+        "Recommendation": {
+          "title": "string",
+          "category": "string",
+          "content_type": "string"
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
 ## Health Check
 
 ### Health Check
@@ -1273,6 +1725,42 @@ curl http://localhost:3000/api/v1/dashboard/summary
 #### Get Top Apps
 ```bash
 curl "http://localhost:3000/api/v1/dashboard/top-apps?limit=5"
+```
+
+#### Get Personalized Recommendations
+```bash
+curl -H "Authorization: Bearer <jwt_token>" \
+  "http://localhost:3000/api/v1/recommendations?limit=10&category=ai_ml"
+```
+
+#### Get Trending Topics
+```bash
+curl -H "Authorization: Bearer <jwt_token>" \
+  "http://localhost:3000/api/v1/recommendations/trending-topics?limit=5"
+```
+
+#### Search Recommendations
+```bash
+curl -H "Authorization: Bearer <jwt_token>" \
+  "http://localhost:3000/api/v1/recommendations/search?q=machine%20learning&limit=10"
+```
+
+#### Record User Interaction
+```bash
+curl -X POST http://localhost:3000/api/v1/recommendations/interactions/recommendation-uuid \
+  -H "Authorization: Bearer <jwt_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "interaction_type": "viewed",
+    "rating": 5,
+    "time_spent_minutes": 45
+  }'
+```
+
+#### Get Career Recommendations
+```bash
+curl -H "Authorization: Bearer <jwt_token>" \
+  "http://localhost:3000/api/v1/recommendations/career?limit=15"
 ```
 
 ---

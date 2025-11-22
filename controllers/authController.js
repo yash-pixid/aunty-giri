@@ -31,7 +31,8 @@ export const register = async (req, res, next) => {
 
     res.status(201).json({
       status: 'success',
-      data: result
+      data: result,
+      message: 'Registration successful!'
     });
   } catch (error) {
     if (error.message === 'User with this email or username already exists') {
@@ -69,7 +70,7 @@ export const registerParentStudent = async (req, res, next) => {
 
     res.status(201).json({
       status: 'success',
-      message: 'Parent and student accounts created successfully',
+      message: 'Parent and student accounts created successfully.',
       data: result
     });
   } catch (error) {
