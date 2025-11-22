@@ -1,6 +1,7 @@
 import { Activity, Screenshot, Keystroke, SystemMetric, User, sequelize } from '../models/index.js';
 import logger from '../utils/logger.js';
 import { Op, fn, col, literal } from 'sequelize';
+import GrokService from '../services/GrokService.js';
 
 // Helper function to get userId - handles parent-student relationship
 const getUserId = async (req) => {
@@ -606,6 +607,178 @@ export const generateActivityReport = async (req, res, next) => {
     });
   } catch (error) {
     logger.error('Error generating activity report:', error);
+    next(error);
+  }
+};
+
+/**
+ * Get AI-powered activity predictions using Grok
+ * Analyzes all user logs and predicts future behavior patterns
+ */
+export const getActivityPredictions = async (req, res, next) => {
+  try {
+    const userId = await getUserId(req);
+    
+    if (!userId) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+
+    // Get user profile
+    const user = await User.findByPk(userId, {
+      attributes: ['id', 'username', 'email', 'student_standard', 'role']
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+
+    // Optional date range filters
+    const { startDate, endDate, limit = 1000 } = req.query;
+    
+    // Build query to fetch all user activities
+    const where = { 
+      user_id: userId,
+      is_active: true
+    };
+
+    if (startDate && endDate) {
+      where.start_time = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    }
+
+    // Fetch all activity logs for the user
+    logger.info(`Fetching activity logs for user ${userId} (limit: ${limit})`);
+    
+    const activities = await Activity.findAll({
+      where,
+      attributes: [
+        'id',
+        'window_title',
+        'app_name',
+        'url',
+        'start_time',
+        'end_time',
+        'duration',
+        'activity_type',
+        'created_at'
+      ],
+      order: [['start_time', 'DESC']],
+      limit: parseInt(limit),
+      raw: true
+    });
+
+    if (activities.length === 0) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'No activity data found for analysis',
+        data: {
+          total_activities: 0,
+          predictions: {
+            next_week: ['Insufficient data for predictions'],
+            next_month: ['Insufficient data for predictions']
+          },
+          behavioral_patterns: [],
+          recommendations: ['Start using the application to generate activity data'],
+          concerns: [],
+          productivity_trend: 'unknown',
+          confidence_score: 0,
+          analysis_date: new Date().toISOString()
+        }
+      });
+    }
+
+    logger.info(`Found ${activities.length} activities, analyzing with Grok...`);
+
+    // Use Grok service to analyze activities and generate predictions
+    const analysis = await GrokService.analyzeActivityPatterns(activities, {
+      username: user.username,
+      student_standard: user.student_standard,
+      role: user.role
+    });
+
+    // Prepare response with activity summary (using internal method)
+    const activitySummary = {
+      totalActivities: activities.length,
+      timeRange: (() => {
+        const timestamps = activities.map(a => new Date(a.start_time)).sort((a, b) => a - b);
+        const startDate = timestamps[0];
+        const endDate = timestamps[timestamps.length - 1];
+        const daysTracked = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+        return { start: startDate.toISOString(), end: endDate.toISOString(), daysTracked };
+      })(),
+      appUsage: (() => {
+        const appUsage = {};
+        activities.forEach(activity => {
+          const app = activity.app_name || 'unknown';
+          if (!appUsage[app]) {
+            appUsage[app] = { count: 0, totalDuration: 0 };
+          }
+          appUsage[app].count++;
+          appUsage[app].totalDuration += parseFloat(activity.duration || 0);
+        });
+        return Object.entries(appUsage)
+          .sort((a, b) => b[1].totalDuration - a[1].totalDuration)
+          .slice(0, 5)
+          .map(([app, data]) => ({ app, usageHours: (data.totalDuration / 3600).toFixed(2), sessions: data.count }));
+      })(),
+      categoryBreakdown: (() => {
+        const breakdown = { productive: 0, neutral: 0, distracting: 0 };
+        activities.forEach(activity => {
+          const appLower = (activity.app_name || '').toLowerCase();
+          const duration = parseFloat(activity.duration || 0);
+          if (['vscode', 'terminal', 'slack', 'chrome', 'firefox', 'safari'].some(p => appLower.includes(p))) {
+            breakdown.productive += duration;
+          } else if (['youtube', 'facebook', 'twitter', 'instagram', 'netflix', 'spotify'].some(d => appLower.includes(d))) {
+            breakdown.distracting += duration;
+          } else {
+            breakdown.neutral += duration;
+          }
+        });
+        return breakdown;
+      })()
+    };
+    activitySummary.totalTimeHours = (Object.values(activitySummary.categoryBreakdown).reduce((a, b) => a + b, 0) / 3600).toFixed(2);
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user_profile: {
+          username: user.username,
+          student_standard: user.student_standard,
+          role: user.role
+        },
+        activity_summary: {
+          total_activities: activities.length,
+          time_range: activitySummary.timeRange,
+          total_time_hours: activitySummary.totalTimeHours,
+          top_apps: activitySummary.appUsage.slice(0, 5),
+          category_breakdown: {
+            productive_hours: (activitySummary.categoryBreakdown.productive / 3600).toFixed(2),
+            neutral_hours: (activitySummary.categoryBreakdown.neutral / 3600).toFixed(2),
+            distracting_hours: (activitySummary.categoryBreakdown.distracting / 3600).toFixed(2)
+          }
+        },
+        ai_analysis: {
+          predictions: analysis.predictions,
+          behavioral_patterns: analysis.behavioral_patterns,
+          recommendations: analysis.recommendations,
+          concerns: analysis.concerns,
+          productivity_trend: analysis.productivity_trend,
+          confidence_score: analysis.confidence_score,
+          analysis_date: analysis.analysis_date
+        }
+      }
+    });
+
+  } catch (error) {
+    logger.error('Error getting activity predictions:', error);
     next(error);
   }
 };
