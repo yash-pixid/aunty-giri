@@ -35,7 +35,7 @@ const Recommendation = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       validate: {
-        min: 9,
+        min: 1,
         max: 12
       }
     },

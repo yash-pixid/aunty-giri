@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { Op } from 'sequelize';
 import sharp from 'sharp';
+import { queueScreenshotForProcessing } from '../services/screenshotQueue.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,8 +53,31 @@ export const uploadScreenshot = async (req, res, next) => {
         user_agent: req.headers['user-agent'],
         ip: req.ip,
         original_name: filename
-      }
+      },
+      processing_status: 'pending'
     });
+
+    // Queue screenshot for AI processing (non-blocking)
+    queueScreenshotForProcessing(screenshot.id, screenshot.file_path)
+      .then(result => {
+        if (result.success) {
+          logger.info('Screenshot queued for AI analysis', {
+            screenshotId: screenshot.id,
+            jobId: result.jobId
+          });
+        } else {
+          logger.error('Failed to queue screenshot for AI analysis', {
+            screenshotId: screenshot.id,
+            error: result.error
+          });
+        }
+      })
+      .catch(error => {
+        logger.error('Error queuing screenshot', {
+          screenshotId: screenshot.id,
+          error: error.message
+        });
+      });
 
     res.status(201).json({
       status: 'success',
