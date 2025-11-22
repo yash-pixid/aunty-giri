@@ -12,6 +12,8 @@ CREATE TABLE users (
   email VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   role VARCHAR(20) NOT NULL DEFAULT 'student' CHECK (role IN ('admin', 'parent', 'student')),
+  parent_id UUID REFERENCES users (id) ON DELETE SET NULL,
+  student_standard INTEGER CHECK (student_standard >= 1 AND student_standard <= 12),
   is_active BOOLEAN NOT NULL DEFAULT true,
   last_active TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),

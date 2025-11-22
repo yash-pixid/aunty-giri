@@ -1,4 +1,5 @@
 import { Activity, Screenshot, Keystroke, SystemMetric, sequelize } from '../models/index.js';
+import MonitorService from '../services/MonitorService.js';
 import logger from '../utils/logger.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -19,19 +20,19 @@ export const uploadScreenshot = async (req, res, next) => {
       });
     }
 
-    // Handle unauthenticated requests
+    // Authentication is now required
     if (!req.user || !req.user.id) {
-      return res.status(201).json({
-        status: 'success',
-        data: {
-          screenshot: {
-            id: `anonymous-screenshot-${Date.now()}`,
-            userId: 'anonymous',
-            file_path: req.file.path,
-            file_size: req.file.size,
-            created_at: new Date().toISOString()
-          }
-        }
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    // Remove this check after replacement
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
       });
     }
 
@@ -41,7 +42,7 @@ export const uploadScreenshot = async (req, res, next) => {
     const image = await sharp(filePath).metadata();
     
     const screenshot = await Screenshot.create({
-      userId: req.user.id,
+      user_id: req.user.id,
       file_path: path.relative(process.cwd(), filePath),
       file_size: size,
       width: image.width,
@@ -71,6 +72,14 @@ export const getScreenshots = async (req, res, next) => {
     const { startDate, endDate, limit = 50, offset = 0 } = req.query;
     
     // Handle unauthenticated requests
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    // Remove this check after replacement
     if (!req.user || !req.user.id) {
       return res.status(200).json({
         status: 'success',
@@ -114,6 +123,14 @@ export const deleteScreenshot = async (req, res, next) => {
     const { id } = req.params;
     
     // Handle unauthenticated requests
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    // Remove this check after replacement
     if (!req.user || !req.user.id) {
       return res.status(200).json({
         status: 'success',
@@ -161,23 +178,9 @@ export const logActivity = async (req, res, next) => {
 
     // Handle unauthenticated requests
     if (!req.user || !req.user.id) {
-      return res.status(200).json({
-        status: 'success',
-        data: {
-          activity: {
-            id: 'anonymous-' + Date.now(),
-            ...req.body,
-            userId: 'anonymous',
-            windowTitle: window_title,
-            appName: app_name,
-            startTime: start_time,
-            endTime: end_time,
-            activityType: activity_type,
-            metadata: req.body.metadata || {},
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        }
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
       });
     }
 
@@ -189,15 +192,16 @@ export const logActivity = async (req, res, next) => {
       });
     }
 
-    // Create activity log for authenticated users
+    // Create activity with the validated values
     const activity = await Activity.create({
-      userId: req.user.id,
-      windowTitle: window_title,
-      appName: app_name,
-      startTime: new Date(start_time),
-      endTime: new Date(end_time),
-      activityType: activity_type,
-      metadata: req.body.metadata || {}
+      user_id: req.user.id,
+      window_title: window_title,
+      app_name: app_name,
+      start_time: new Date(start_time),
+      end_time: new Date(end_time),
+      activity_type: activity_type,
+      duration: req.body.duration || 0,
+      url: req.body.url || null
     });
 
     res.status(201).json({
@@ -217,6 +221,14 @@ export const getActivities = async (req, res, next) => {
     const { startDate, endDate, limit = 100, offset = 0, appName } = req.query;
     
     // Handle unauthenticated requests
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    // Remove this check after replacement
     if (!req.user || !req.user.id) {
       return res.status(200).json({
         status: 'success',
@@ -261,6 +273,14 @@ export const getActivitySummary = async (req, res, next) => {
     const { startDate, endDate } = req.query;
     
     // Handle unauthenticated requests
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    // Remove this check after replacement
     if (!req.user || !req.user.id) {
       return res.status(200).json({
         status: 'success',
@@ -327,6 +347,14 @@ export const logKeystrokes = async (req, res, next) => {
     
     // Handle unauthenticated requests
     if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    // Remove this check after replacement
+    if (!req.user || !req.user.id) {
       // Return a success response with mock data for unauthenticated requests
       return res.status(201).json({
         status: 'success',
@@ -382,6 +410,14 @@ export const getKeystrokes = async (req, res, next) => {
     
     // Handle unauthenticated requests
     if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    // Remove this check after replacement
+    if (!req.user || !req.user.id) {
       return res.status(200).json({
         status: 'success',
         data: []
@@ -426,6 +462,14 @@ export const logMetrics = async (req, res, next) => {
     const { cpu, memory, disk, network } = req.body;
     
     // Handle unauthenticated requests
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    // Remove this check after replacement
     if (!req.user || !req.user.id) {
       return res.status(201).json({
         status: 'success',
@@ -485,6 +529,14 @@ export const getMetrics = async (req, res, next) => {
     
     // Handle unauthenticated requests
     if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    // Remove this check after replacement
+    if (!req.user || !req.user.id) {
       return res.status(200).json({
         status: 'success',
         data: []
@@ -524,6 +576,14 @@ export const getMetricsSummary = async (req, res, next) => {
     const { start_date, end_date } = req.query;
     
     // Handle unauthenticated requests
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    // Remove this check after replacement
     if (!req.user || !req.user.id) {
       return res.status(200).json({
         status: 'success',

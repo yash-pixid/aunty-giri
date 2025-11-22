@@ -43,6 +43,26 @@ const User = (sequelize, DataTypes) => {
       defaultValue: 'student',
       field: 'role'
     },
+    parent_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'parent_id',
+      references: {
+        model: 'users',
+        key: 'id'
+      }
+    },
+    student_standard: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'student_standard',
+      validate: {
+        min: 1,
+        max: 12,
+        isInt: true
+      },
+      comment: 'Class/Standard for students (integer value, e.g., 8, 9, 10)'
+    },
     is_active: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

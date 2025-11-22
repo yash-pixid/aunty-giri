@@ -25,9 +25,9 @@ export const login = async (req, res, next) => {
 
 export const register = async (req, res, next) => {
   try {
-    const { username, email, password, role, student_standard} = req.body;
+    const { username, email, password, role, student_standard } = req.body;
 
-    const result = await AuthService.registerUser({ username, email, password, role, student_standard });
+    const result = await AuthService.registerUser({ username, email, password, role, student_standard});
 
     res.status(201).json({
       status: 'success',
@@ -41,46 +41,6 @@ export const register = async (req, res, next) => {
       });
     }
     logger.error('Registration controller error:', error);
-    next(error);
-  }
-};
-
-export const registerParentStudent = async (req, res, next) => {
-  try {
-    const {
-      parent_name,
-      parent_email,
-      parent_password,
-      student_name,
-      student_email,
-      student_password,
-      student_standard
-    } = req.body;
-
-    const result = await AuthService.registerParentAndStudent({
-      parent_name,
-      parent_email,
-      parent_password,
-      student_name,
-      student_email,
-      student_password,
-      student_standard
-    });
-
-    res.status(201).json({
-      status: 'success',
-      message: 'Parent and student accounts created successfully',
-      data: result
-    });
-  } catch (error) {
-    if (error.message.includes('already exists') || 
-        error.message.includes('All fields are required')) {
-      return res.status(400).json({
-        status: 'error',
-        message: error.message
-      });
-    }
-    logger.error('Parent-Student registration controller error:', error);
     next(error);
   }
 };
