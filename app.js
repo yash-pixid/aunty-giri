@@ -49,11 +49,13 @@ const initializeApp = async () => {
     const monitorRoutes = (await import('./routes/monitor.js')).default;
     const dashboardRoutes = (await import('./routes/dashboard.js')).default;
     const authRoutes = (await import('./routes/auth.js')).default;
+    const recommendationRoutes = (await import('./routes/recommendations.js')).default;
 
     // API Routes
     app.use('/api/v1/monitor', monitorRoutes);
     app.use('/api/v1/dashboard', dashboardRoutes);
     app.use('/api/v1/auth', authRoutes);
+    app.use('/api/v1/recommendations', recommendationRoutes);
 
     // Health check endpoint
     app.get('/health', (req, res) => {
