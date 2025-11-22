@@ -114,7 +114,7 @@ export const getScreenshots = async (req, res, next) => {
       });
     }
     
-    const where = { userId: req.user.id };
+    const where = { user_id: req.user.id };
     
     if (startDate && endDate) {
       where.created_at = {
@@ -165,7 +165,7 @@ export const deleteScreenshot = async (req, res, next) => {
     const screenshot = await Screenshot.findOne({
       where: {
         id,
-        userId: req.user.id
+        user_id: req.user.id
       }
     });
     
@@ -260,21 +260,21 @@ export const getActivities = async (req, res, next) => {
       });
     }
     
-    const where = { userId: req.user.id };
+    const where = { user_id: req.user.id };
     
     if (startDate && endDate) {
-      where.startTime = {
+      where.start_time = {
         [Op.between]: [new Date(startDate), new Date(endDate)]
       };
     }
     
     if (appName) {
-      where.appName = appName;
+      where.app_name = appName;
     }
     
     const activities = await Activity.findAndCountAll({
       where,
-      order: [['startTime', 'DESC']],
+      order: [['start_time', 'DESC']],
       limit: parseInt(limit, 10),
       offset: parseInt(offset, 10)
     });
@@ -316,7 +316,7 @@ export const getActivitySummary = async (req, res, next) => {
       });
     }
     
-    const where = { userId: req.user.id };
+    const where = { user_id: req.user.id };
     
     if (startDate && endDate) {
       where.start_time = {
@@ -404,7 +404,7 @@ export const logKeystrokes = async (req, res, next) => {
     // For authenticated users, log the keystrokes to the database
     const keystrokes = await Keystroke.bulkCreate(
       key_log.map(key => ({
-        userId: req.user.id,
+        user_id: req.user.id,
         key_code: key.key_code || 0,
         key_char: key.key_char || null,
         key_type: key.key_type || 'alphanumeric',
@@ -448,7 +448,7 @@ export const getKeystrokes = async (req, res, next) => {
       });
     }
     
-    const where = { userId: req.user.id };
+    const where = { user_id: req.user.id };
     
     if (start_date && end_date) {
       where.timestamp = {
@@ -517,7 +517,7 @@ export const logMetrics = async (req, res, next) => {
     }
     
     const metric = await SystemMetric.create({
-      userId: req.user.id,
+      user_id: req.user.id,
       cpu_usage: cpu.usage || 0,
       memory_usage: memory.usage || 0,
       disk_usage: disk.usage || 0,
@@ -567,7 +567,7 @@ export const getMetrics = async (req, res, next) => {
       });
     }
     
-    const where = { userId: req.user.id };
+    const where = { user_id: req.user.id };
     
     if (start_date && end_date) {
       where.created_at = {
@@ -620,7 +620,7 @@ export const getMetricsSummary = async (req, res, next) => {
       });
     }
     
-    const where = { userId: req.user.id };
+    const where = { user_id: req.user.id };
     
     if (start_date && end_date) {
       where.created_at = {

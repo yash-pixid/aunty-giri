@@ -234,7 +234,7 @@ export const getTopApps = async (req, res, next) => {
     
     const { limit = 10, startDate, endDate } = req.query;
     
-    const where = { userId: userId };
+    const where = { user_id: userId };
     
     if (startDate && endDate) {
       where.start_time = {
@@ -283,7 +283,7 @@ export const getWebsiteUsage = async (req, res, next) => {
     const { limit = 20, startDate, endDate } = req.query;
     
     const where = {
-      userId: userId,
+      user_id: userId,
       activity_type: 'browser',
       url: {
         [Op.ne]: null,
@@ -366,7 +366,7 @@ export const getProductivityScore = async (req, res, next) => {
     
     const { startDate, endDate } = req.query;
     
-    const where = { userId: userId };
+    const where = { user_id: userId };
     
     if (startDate && endDate) {
       where.start_time = {
@@ -447,7 +447,7 @@ export const getScreenshots = async (req, res, next) => {
     const { page = 1, limit = 20, startDate, endDate } = req.query;
     const offset = (page - 1) * limit;
     
-    const where = { userId: userId, is_archived: false };
+    const where = { user_id: userId, is_archived: false };
     
     if (startDate && endDate) {
       where.created_at = {
