@@ -2,30 +2,14 @@ import { Activity, Screenshot, Keystroke, SystemMetric, User, sequelize } from '
 import logger from '../utils/logger.js';
 import { Op, fn, col, literal } from 'sequelize';
 
-// Helper function to get userId - uses authenticated user or user with most data
+// Helper function to get userId - handles parent-student relationship
 const getUserId = async (req) => {
-  if (req.user && req.user.id) {
-    return req.user.id;
+  if (!req.user || !req.user.id) {
+    throw new Error('User not authenticated');
   }
-  
-  // When unauthenticated, find user with the most activities
-  const userWithActivities = await Activity.findOne({
-    attributes: [
-      'userId',
-      [fn('COUNT', col('id')), 'activity_count']
-    ],
-    group: ['userId'],
-    order: [[fn('COUNT', col('id')), 'DESC']],
-    raw: true
-  });
-  
-  if (userWithActivities && userWithActivities.userId) {
-    return userWithActivities.userId;
-  }
-  
-  // Fallback to first user
-  const firstUser = await User.findOne({ order: [['created_at', 'ASC']] });
-  return firstUser ? firstUser.id : null;
+
+  // If user is a parent, return their own ID
+  return req.user.id;
 };
 
 // Get dashboard summary
@@ -33,47 +17,49 @@ export const getDashboardSummary = async (req, res, next) => {
   try {
     const userId = await getUserId(req);
     
+    // If no userId (parent with no students), return empty data
     if (!userId) {
       return res.status(200).json({
         status: 'success',
         data: {
-          today_activities: [],
-          today_vs_yesterday: { change: 0, trend: 'neutral' },
-          screenshots: { today: 0, change: 0 },
-          keystrokes: { today: 0, change: 0 },
-          productivity_score: 0,
-          active_hours: 0,
-          most_used_app: 'N/A',
-          most_visited_website: 'N/A'
+          summary: {
+            totalTime: 0,
+            productiveTime: 0,
+            productivityScore: 0,
+            screenshotsCount: 0,
+            avg_cpu_usage: null,
+            avg_memory_usage: null,
+            avg_disk_usage: null
+          },
+          comparison: {
+            yesterday_total_time: 0
+          }
         }
       });
     }
+    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     
-    // Get today's activities
-    const todayActivities = await Activity.findAll({
+    const lastWeek = new Date(today);
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    
+    // Get all activities for student (no date filter)
+    const allRecentActivities = await Activity.findAll({
       where: {
-        userId: userId,
-        start_time: {
-          [Op.gte]: today
-        }
+        user_id: userId
       },
-      attributes: [
-        'activity_type',
-        [fn('SUM', col('duration')), 'total_duration']
-      ],
-      group: ['activity_type'],
+      attributes: ['activity_type', 'duration'],
       raw: true
     });
     
     // Get yesterday's activities for comparison
     const yesterdayActivities = await Activity.findAll({
       where: {
-        userId: userId,
+        user_id: userId,
         start_time: {
           [Op.gte]: yesterday,
           [Op.lt]: today
@@ -85,23 +71,17 @@ export const getDashboardSummary = async (req, res, next) => {
       raw: true
     });
     
-    // Get today's screenshots count
-    const todayScreenshots = await Screenshot.count({
+    // Get all screenshots for student (no date filter for testing)
+    const recentScreenshots = await Screenshot.count({
       where: {
-        userId,
-        created_at: {
-          [Op.gte]: today
-        }
+        user_id: userId
       }
     });
     
-    // Get system metrics summary for today
+    // Get system metrics summary (all data)
     const metrics = await SystemMetric.findAll({
       where: {
-        userId: userId,
-        created_at: {
-          [Op.gte]: today
-        }
+        user_id: userId
       },
       attributes: [
         [fn('AVG', col('cpu_usage')), 'avg_cpu_usage'],
@@ -112,12 +92,12 @@ export const getDashboardSummary = async (req, res, next) => {
     });
     
     // Calculate productivity score (simplified example)
-    const productiveTime = todayActivities
+    const productiveTime = allRecentActivities
       .filter(a => a.activity_type === 'application' || a.activity_type === 'browser')
-      .reduce((sum, a) => sum + parseFloat(a.total_duration || 0), 0);
+      .reduce((sum, a) => sum + parseFloat(a.duration || 0), 0);
     
-    const totalTime = todayActivities
-      .reduce((sum, a) => sum + parseFloat(a.total_duration || 0), 0);
+    const totalTime = allRecentActivities
+      .reduce((sum, a) => sum + parseFloat(a.duration || 0), 0);
     
     const productivityScore = totalTime > 0 
       ? Math.min(100, Math.round((productiveTime / totalTime) * 100))
@@ -130,7 +110,7 @@ export const getDashboardSummary = async (req, res, next) => {
           totalTime: totalTime,
           productiveTime,
           productivityScore,
-          screenshotsCount: todayScreenshots,
+          screenshotsCount: recentScreenshots,
           ...(metrics[0] || {})
         },
         comparison: {
@@ -196,7 +176,7 @@ export const getActivityTimeline = async (req, res, next) => {
     
     const activities = await Activity.findAll({
       where: {
-        userId: userId,
+        user_id: userId,
         start_time: {
           [Op.gte]: startDate,
           [Op.lt]: endDate
@@ -525,7 +505,7 @@ export const generateActivityReport = async (req, res, next) => {
     
     const { startDate, endDate, format = 'json' } = req.query;
     
-    const where = { userId: userId };
+    const where = { user_id: userId };
     
     if (startDate && endDate) {
       where.start_time = {
@@ -579,8 +559,15 @@ export const generateActivityReport = async (req, res, next) => {
     });
     
     // Get system metrics summary
+    const metricsWhere = { user_id: userId };
+    if (startDate && endDate) {
+      metricsWhere.created_at = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    }
+    
     const metrics = await SystemMetric.findAll({
-      where,
+      where: metricsWhere,
       attributes: [
         [fn('AVG', col('cpu_usage')), 'avgCpuUsage'],
         [fn('AVG', col('memory_usage')), 'avgMemoryUsage'],

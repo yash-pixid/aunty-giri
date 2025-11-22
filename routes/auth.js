@@ -6,6 +6,8 @@ import { authenticate } from '../middleware/auth.js';
 // Public routes
 router.post('/login', authController.login);
 router.post('/register', authController.register);
+router.post('/register-parent-student', authController.registerParentStudent);
+router.post('/refresh-token', authController.refreshToken);
 
 // Protected routes
 router.use(authenticate);

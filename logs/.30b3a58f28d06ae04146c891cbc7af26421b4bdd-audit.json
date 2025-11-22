@@ -6,9 +6,9 @@
     "auditLog": "/Users/Yash/Desktop/AuntyGiri/student-monitor-backend/logs/.30b3a58f28d06ae04146c891cbc7af26421b4bdd-audit.json",
     "files": [
         {
-            "date": 1763741293959,
-            "name": "/Users/Yash/Desktop/AuntyGiri/student-monitor-backend/logs/combined-2025-11-21.log",
-            "hash": "9ee7a20fc64b5e2f3f87a421cf8be657bc8dfa9f322e02e0e4de8a43ccb713dd"
+            "date": 1763763043109,
+            "name": "/Users/Yash/Desktop/AuntyGiri/student-monitor-backend/logs/combined-2025-11-22.log",
+            "hash": "10b11dfd2a1fc066cb07f68c07ca774894d781c6dfef20683bf898c0ec1bf1d4"
         }
     ],
     "hashType": "sha256"

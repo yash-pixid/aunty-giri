@@ -42,6 +42,10 @@ User.hasMany(Screenshot, { foreignKey: 'userId' });
 User.hasMany(Keystroke, { foreignKey: 'userId' });
 User.hasMany(SystemMetric, { foreignKey: 'userId' });
 
+// Parent-Student relationship
+User.hasMany(User, { foreignKey: 'parent_id', as: 'students' });
+User.belongsTo(User, { foreignKey: 'parent_id', as: 'parent' });
+
 Activity.belongsTo(User, { foreignKey: 'userId' });
 Screenshot.belongsTo(User, { foreignKey: 'userId' });
 Keystroke.belongsTo(User, { foreignKey: 'userId' });

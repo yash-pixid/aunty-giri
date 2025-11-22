@@ -75,7 +75,108 @@ Register a new user account.
 
 ---
 
-### 2. Login
+### 2. Register Parent-Student
+
+**POST** `/api/v1/auth/register-parent-student`
+
+Register both parent and student accounts in a single request. Creates two linked user accounts where the student is associated with the parent.
+
+#### Request Body
+
+```json
+{
+  "parent_name": "string (required, parent's full name)",
+  "parent_email": "string (required, valid email for parent)",
+  "parent_password": "string (required, min 6 characters)",
+  "student_name": "string (required, student's full name)",
+  "student_email": "string (required, valid email for student)",
+  "student_password": "string (required, min 6 characters)",
+  "student_standard": "integer (required, 1-12, student's class/grade)"
+}
+```
+
+#### Response
+
+**Status**: `201 Created`
+
+```json
+{
+  "status": "success",
+  "message": "Parent and student accounts created successfully",
+  "data": {
+    "parent": {
+      "id": "uuid",
+      "username": "string",
+      "email": "string",
+      "role": "parent",
+      "parent_id": null,
+      "student_standard": null,
+      "is_active": true,
+      "created_at": "ISO8601 datetime",
+      "updated_at": "ISO8601 datetime"
+    },
+    "student": {
+      "id": "uuid",
+      "username": "string",
+      "email": "string",
+      "role": "student",
+      "parent_id": "parent_uuid",
+      "student_standard": 9,
+      "is_active": true,
+      "created_at": "ISO8601 datetime",
+      "updated_at": "ISO8601 datetime"
+    },
+    "primaryUser": {
+      "id": "parent_uuid",
+      "username": "string",
+      "email": "string",
+      "role": "parent",
+      "is_active": true,
+      "created_at": "ISO8601 datetime",
+      "updated_at": "ISO8601 datetime"
+    },
+    "accessToken": "jwt_token",
+    "refreshToken": "jwt_refresh_token",
+    "expiresIn": "15m"
+  }
+}
+```
+
+#### Error Responses
+
+**Status**: `400 Bad Request`
+
+```json
+{
+  "status": "error",
+  "message": "Parent with this email or username already exists"
+}
+```
+
+```json
+{
+  "status": "error",
+  "message": "Student with this email or username already exists"
+}
+```
+
+```json
+{
+  "status": "error",
+  "message": "student_standard must be an integer between 1 and 12"
+}
+```
+
+```json
+{
+  "status": "error",
+  "message": "All fields are required: parent_name, parent_email, parent_password, student_name, student_email, student_password, student_standard"
+}
+```
+
+---
+
+### 3. Login
 
 **POST** `/api/v1/auth/login`
 
@@ -1076,6 +1177,21 @@ curl -X POST http://localhost:3000/api/v1/auth/register \
     "email": "test@example.com",
     "password": "password123",
     "role": "student"
+  }'
+```
+
+#### Register Parent-Student
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/register-parent-student \
+  -H "Content-Type: application/json" \
+  -d '{
+    "parent_name": "John Doe",
+    "parent_email": "john.doe@example.com",
+    "parent_password": "parentpass123",
+    "student_name": "Jane Doe",
+    "student_email": "jane.doe@example.com",
+    "student_password": "studentpass123",
+    "student_standard": 10
   }'
 ```
 
