@@ -6,7 +6,12 @@ This document describes all API endpoints, request/response formats, and example
 
 **API Version**: `v1`
 
-**Note**: Authentication is currently disabled. All endpoints work without authentication tokens.
+**Note**: Authentication is required for most endpoints. Only registration, login, refresh-token, and health check endpoints work without authentication tokens.
+
+**Authentication**: For protected endpoints, include the JWT token in the Authorization header:
+```
+Authorization: Bearer <jwt_token>
+```
 
 ---
 
@@ -36,7 +41,8 @@ Register a new user account.
   "username": "string (required, 3-50 chars)",
   "email": "string (required, valid email)",
   "password": "string (required, min 6 chars)",
-  "role": "string (optional, 'admin' | 'parent' | 'student', default: 'student')"
+  "role": "string (optional, 'admin' | 'parent' | 'student', default: 'student')",
+  "student_standard": "integer (optional, 1-12, required if role is 'student')"
 }
 ```
 
@@ -225,7 +231,49 @@ Authenticate and get JWT token.
 
 ---
 
-### 3. Get Current User
+### 4. Refresh Token
+
+**POST** `/api/v1/auth/refresh-token`
+
+Refresh access token using refresh token.
+
+#### Request Body
+
+```json
+{
+  "refreshToken": "string (required)"
+}
+```
+
+#### Response
+
+**Status**: `200 OK`
+
+```json
+{
+  "status": "success",
+  "data": {
+    "accessToken": "jwt_token_string",
+    "refreshToken": "jwt_refresh_token_string",
+    "expiresIn": "15m"
+  }
+}
+```
+
+#### Error Response
+
+**Status**: `401 Unauthorized`
+
+```json
+{
+  "status": "error",
+  "message": "Invalid or expired refresh token"
+}
+```
+
+---
+
+### 5. Get Current User
 
 **GET** `/api/v1/auth/me`
 
@@ -254,7 +302,7 @@ Get current authenticated user information.
 
 ---
 
-### 4. Update Profile
+### 6. Update Profile
 
 **PUT** `/api/v1/auth/profile`
 
@@ -292,7 +340,7 @@ Update user profile information.
 
 ---
 
-### 5. Logout
+### 7. Logout
 
 **POST** `/api/v1/auth/logout`
 
@@ -1192,6 +1240,15 @@ curl -X POST http://localhost:3000/api/v1/auth/register-parent-student \
     "student_email": "jane.doe@example.com",
     "student_password": "studentpass123",
     "student_standard": 10
+  }'
+```
+
+#### Refresh Token
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/refresh-token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refreshToken": "your_refresh_token_here"
   }'
 ```
 
